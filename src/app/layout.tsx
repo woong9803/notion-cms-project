@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'NextJS Starter - 모던 웹 스타터킷',
+  title: 'DevPath - 학습 로드맵 & 데브로그',
   description:
-    'Next.js 15, TypeScript, TailwindCSS, ShadcnUI로 구축된 프로덕션 준비가 완료된 웹 애플리케이션 스타터킷',
+    'Notion CMS 기반으로 React Native, Expo 등 기술 스택 학습 기록과 진척도를 시각화하고 공유하는 개발 학습 대시보드',
 }
 
 export default function RootLayout({

@@ -6,8 +6,9 @@ export function Footer() {
       <Container>
         <div className="py-8">
           <div className="text-center">
+            {/* DevPath 프로젝트 푸터 */}
             <p className="text-muted-foreground text-sm">
-              © 2024 NextJS Starter. 모든 권리 보유.
+              © 2026 DevPath. Notion CMS 기반 학습 로드맵 & 데브로그
             </p>
           </div>
         </div>

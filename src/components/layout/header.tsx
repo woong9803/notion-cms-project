@@ -22,7 +22,8 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold">NextJS Starter</span>
+              {/* DevPath 브랜드 로고 */}
+              <span className="text-xl font-bold">DevPath</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -31,7 +32,8 @@ export function Header() {
 
           {/* Right Side */}
           <div className="flex items-center gap-4">
-            {!isMobile && (
+            {/* 로그인 버튼은 향후 인증 기능 추가 시 활성화 */}
+            {false && !isMobile && (
               <Link href="/login">
                 <Button variant="outline" size="sm">
                   로그인

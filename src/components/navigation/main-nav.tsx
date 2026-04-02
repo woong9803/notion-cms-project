@@ -9,8 +9,10 @@ interface NavItem {
   href: string
 }
 
+// DevPath 주요 네비게이션 항목
 const navItems: NavItem[] = [
   { title: '홈', href: '/' },
+  { title: '로드맵', href: '/roadmap' },
 ]
 
 export function MainNav() {

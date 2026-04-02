@@ -5,9 +5,10 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 
+// DevPath 모바일 네비게이션 항목
 const navItems = [
   { title: '홈', href: '/' },
-  { title: '로그인', href: '/login' },
+  { title: '로드맵', href: '/roadmap' },
 ]
 
 interface MobileNavProps {

@@ -50,10 +50,17 @@ export function LearningItemCard({
       role={onClick ? 'button' : 'article'}
       tabIndex={onClick ? 0 : undefined}
       aria-label={`학습 항목: ${item.title}`}
-      onClick={() => {}}
-      // TODO: onClick 핸들러 연결 필요
-      onKeyDown={() => {}}
-      // TODO: Enter/Space 키 이벤트 핸들러 연결 필요
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
       className={cn(
         // 기본 스타일
         'transition-all duration-200',

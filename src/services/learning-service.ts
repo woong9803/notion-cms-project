@@ -346,6 +346,65 @@ export async function getFilteredAndSortedItems(
 }
 
 // ============================================================================
+// 상세 페이지 전용 서비스 함수
+// ============================================================================
+
+/**
+ * 같은 카테고리 내에서 현재 항목의 이전/다음 항목을 조회합니다.
+ * 날짜 순서(오래된 순)로 정렬한 후 인접 항목을 반환합니다.
+ */
+export async function getAdjacentItems(
+  currentId: string,
+  category: Category
+): Promise<{
+  previous: LearningItem | null
+  next: LearningItem | null
+}> {
+  try {
+    // 같은 카테고리 항목을 날짜 오름차순으로 정렬
+    const items = await getLearningItemsByCategory(category)
+    const sorted = [...items].sort((a, b) => {
+      const aTime = a.startDate?.getTime() ?? a.createdAt.getTime()
+      const bTime = b.startDate?.getTime() ?? b.createdAt.getTime()
+      return aTime - bTime
+    })
+
+    const currentIndex = sorted.findIndex(item => item.id === currentId)
+
+    if (currentIndex === -1) {
+      return { previous: null, next: null }
+    }
+
+    return {
+      previous: currentIndex > 0 ? sorted[currentIndex - 1] : null,
+      next: currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : null,
+    }
+  } catch (error) {
+    throw handleNotionError(error)
+  }
+}
+
+/**
+ * 같은 카테고리의 관련 항목을 최대 count개 반환합니다.
+ * 현재 항목은 제외하고 최신 수정일 순으로 정렬합니다.
+ */
+export async function getRelatedItems(
+  currentId: string,
+  category: Category,
+  count = 3
+): Promise<LearningItem[]> {
+  try {
+    const items = await getLearningItemsByCategory(category)
+    return items
+      .filter(item => item.id !== currentId)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+      .slice(0, count)
+  } catch (error) {
+    throw handleNotionError(error)
+  }
+}
+
+// ============================================================================
 // 캐시 관리
 // ============================================================================
 

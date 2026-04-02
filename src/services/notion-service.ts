@@ -9,6 +9,7 @@ import type {
   GetDatabaseResponse,
   PageObjectResponse,
 } from '@notionhq/client'
+import type { BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints/blocks'
 import { getNotionClient } from '@/lib/notion-client'
 import { NotionError, NotFoundError } from '@/lib/errors'
 
@@ -174,6 +175,47 @@ export async function getPage(pageId: string): Promise<PageObjectResponse> {
     if (error instanceof NotFoundError) {
       throw error
     }
+    throwNotionError(error)
+  }
+}
+
+// ============================================================================
+// 블록 콘텐츠 조회 함수
+// ============================================================================
+
+/**
+ * 페이지의 블록 자식 목록을 모두 조회합니다.
+ * 페이지네이션을 자동으로 처리합니다.
+ */
+export async function getPageBlocks(
+  pageId: string
+): Promise<BlockObjectResponse[]> {
+  const client = getNotionClient()
+  const results: BlockObjectResponse[] = []
+  let startCursor: string | undefined = undefined
+  let hasMore = true
+
+  try {
+    while (hasMore) {
+      const response = await client.blocks.children.list({
+        block_id: pageId,
+        start_cursor: startCursor,
+        page_size: 100,
+      })
+
+      for (const block of response.results) {
+        // 전체 블록 응답만 수집
+        if ('type' in block) {
+          results.push(block as BlockObjectResponse)
+        }
+      }
+
+      hasMore = response.has_more
+      startCursor = response.next_cursor ?? undefined
+    }
+
+    return results
+  } catch (error) {
     throwNotionError(error)
   }
 }

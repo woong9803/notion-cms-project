@@ -2,7 +2,7 @@
 
 **프로젝트**: DevPath - 학습 로드맵 & 데브로그 웹사이트  
 **기간**: 2026-04-01 ~ 2026-05-30 (5주)  
-**상태**: 진행 중 (Phase 1 ✅ 완료, Phase 2 시작 예정)
+**상태**: 진행 중 (Phase 1 ✅ 완료, Phase 2 ✅ 완료, Phase 3 대기 중)
 
 ---
 
@@ -148,76 +148,96 @@ Notion API 연동을 완료하고, 애플리케이션 전체에서 사용할 데
 
 ### 🛠️ 작업 목록
 
-#### Task 101: Notion API 클라이언트 설정
+#### Task 101: Notion API 클라이언트 설정 ✅
 
-- [ ] Notion SDK 설치 (`npm install @notionhq/client`)
-- [ ] API 키 환경 변수 설정 (`.env.local`)
-- [ ] Notion 클라이언트 인스턴스 생성
-- [ ] 데이터베이스 ID 확인 및 설정
-- [ ] API 연동 테스트 (콘솔 출력)
+- [x] Notion SDK 설치 (`npm install @notionhq/client`)
+- [x] API 키 환경 변수 설정 (`.env.local`)
+- [x] Notion 클라이언트 인스턴스 생성 (`src/lib/notion-client.ts`)
+- [x] 데이터베이스 ID 확인 및 설정
+- [x] 기본 쿼리 함수 구현 (`src/services/notion-service.ts`)
+  - `getDatabase()` - 데이터베이스 메타 조회
+  - `queryDatabase()` - 단일 페이지 쿼리
+  - `queryDatabaseAll()` - 전체 항목 페이지네이션 조회
+  - `getPage()` - 단일 페이지 상세 조회
 
 **소요 시간**: 1일  
 **완료 기준**: Notion API에서 데이터 조회 성공
 
-#### Task 102: 데이터 모델 & DTO 정의
+#### Task 102: 데이터 모델 & DTO 정의 ✅
 
-- [ ] Notion 데이터베이스 스키마 분석
-- [ ] TypeScript 인터페이스 정의
-  ```typescript
-  interface LearningItem {
-    id: string
-    title: string
-    category: Category
-    status: Status
-    date: string
-    summary: string
-    content: string
-    tags: string[]
-  }
-  ```
-- [ ] DTO 클래스 작성 (데이터 변환 로직)
-- [ ] 데이터 검증 로직 구현 (Zod)
+- [x] Notion 데이터베이스 스키마 분석 및 API 응답 타입 파악
+- [x] TypeScript 인터페이스 정의 (기존 `src/types/index.ts` 활용)
+- [x] DTO 타입 정의 (`src/services/dtos/notion-dtos.ts`)
+  - `TitlePropertyDTO`, `SelectPropertyDTO`, `StatusPropertyDTO`
+  - `DatePropertyDTO`, `RichTextPropertyDTO`, `MultiSelectPropertyDTO`
+  - `LearningPagePropertiesDTO`, `NotionLearningPageDTO`
+  - `NotionDatabaseQueryResultDTO`
+- [x] 데이터 매퍼 구현 (`src/services/mappers/learning-mapper.ts`)
+  - `mapPageResponseToDTO()` - Notion SDK 응답 → DTO
+  - `mapDTOToLearningItem()` - DTO → LearningItem
+  - `mapNotionPageToLearningItem()` - 직접 변환 단축 함수
+  - `mapNotionPagesToLearningItems()` - 배열 변환 (오류 항목 스킵)
+- [x] 데이터 검증 로직 (`src/lib/validators.ts` 재사용)
 
 **소요 시간**: 1.5일  
 **완료 기준**: 모든 데이터 모델이 정의되고, 실제 Notion 데이터와 일치
 
-#### Task 103: 데이터 페칭 서비스 구현
+#### Task 103: 데이터 페칭 서비스 구현 ✅
 
-- [ ] `src/services/notion.service.ts` 작성
-- [ ] 주요 함수 구현
-  - `getAllLearningItems()` - 전체 데이터 조회
+- [x] `src/services/learning-service.ts` 작성
+- [x] 주요 함수 구현
+  - `getAllLearningItems()` - 전체 데이터 조회 (캐시 지원)
   - `getLearningItemById(id)` - 단일 항목 조회
-  - `getLearningItemsByCategory(category)` - 카테고리별 필터
-  - `getLearningItemsByStatus(status)` - 상태별 필터
-- [ ] 에러 처리 및 로깅
-- [ ] 캐싱 로직 (ISR 또는 메모리 캐싱)
+  - `getLearningItemsByCategory(category)` - 카테고리별 필터 (API 레벨 최적화)
+  - `getLearningItemsByStatus(status)` - 상태별 필터 (API 레벨 최적화)
+  - `searchLearningItems(query)` - 제목/요약/태그 텍스트 검색
+  - `getFilteredAndSortedItems(filter, sort)` - 종합 필터 & 정렬
+- [x] 에러 처리 (`NotionError`, `NotFoundError`, `ValidationError`)
+- [x] 인메모리 캐싱 (Map 기반, NOTION_CACHE_TTL 300초)
+  - `invalidateCache()` - 전체 캐시 무효화
+  - `invalidateCacheKey(key)` - 특정 키 무효화
+  - `getCacheStatus()` - 캐시 상태 확인 (디버깅용)
+- [x] 필터링/정렬 헬퍼 함수 (`applyFilter`, `applySort`)
 
 **소요 시간**: 1.5일  
 **완료 기준**: 모든 페칭 함수가 정상 작동하고 테스트 완료
 
-#### Task 104: 공통 UI 컴포넌트 개발
+#### Task 104: 공통 UI 컴포넌트 개발 ✅
 
-- [ ] **LearningCard** - 학습 항목 카드
+- [x] **LearningCard** - 학습 항목 카드
   - 제목, 카테고리, 상태, 날짜 표시
   - 호버 효과 및 클릭 가능
-- [ ] **StatusBadge** - 상태 뱃지 컴포넌트
+- [x] **StatusBadge** - 상태 뱃지 컴포넌트
   - 상태별 색상 구분
-- [ ] **CategoryTag** - 카테고리 태그
-- [ ] **FilterButton** - 필터링 버튼 그룹
-- [ ] **ProgressBar** - 진행률 표시 바
+- [x] **CategoryTag** - 카테고리 태그
+- [x] **FilterButton** - 필터링 버튼 그룹
+- [x] **ProgressBar** - 진행률 표시 바
 
 **소요 시간**: 2일  
 **완료 기준**: 모든 컴포넌트가 스토리북 또는 수동 테스트에서 정상 작동
 
-#### Task 105: 데이터 유틸리티 함수 작성
+#### Task 105: 데이터 유틸리티 함수 작성 ✅
 
-- [ ] 진행률 계산 함수
-  ```typescript
-  function calculateProgress(items: LearningItem[]): number
-  ```
-- [ ] 카테고리별 집계 함수
-- [ ] 날짜 포맷팅 함수
-- [ ] 필터링 헬퍼 함수
+- [x] 진행률 계산 함수 (`src/lib/progress-calculator.ts`)
+  - `calculateTotalProgress()`, `calculateCategoryProgress()`, `calculateAllCategoryProgress()`
+  - `calculatePercentage()`, `getInProgressItems()`, `getCompletedItems()`, `getTodoItems()`
+- [x] 카테고리별 집계 함수 (`src/lib/statistics.ts`)
+  - `getCategoryStats()`, `getMostStudiedCategory()`, `getMonthlyStats()`
+  - `getRecentItems()`, `getUpcomingItems()`, `getTagFrequency()`, `getTopTags()`
+  - `calculateAverageLearningDuration()`, `calculateTotalLearningDays()`
+- [x] 날짜 포맷팅 함수 (`src/lib/formatters.ts`)
+  - `formatDate()`, `formatDateRange()`, `formatDuration()`, `formatNumber()`
+  - `formatStatus()`, `formatCategory()`, `formatProgress()`, `formatPercentage()`
+  - `generateItemSummary()`, `generateCategoryStats()`
+- [x] 필터링 헬퍼 함수 (`src/lib/transformers.ts`)
+  - `filterByStatus()`, `filterByCategory()`, `filterItems()`, `sortItems()`, `searchItems()`
+  - `paginate()`, `groupByCategory()`, `groupByStatus()`, `sortByDateDesc()`, `sortByDateAsc()`
+- [x] 비교 함수 (`src/lib/comparators.ts`)
+  - `compareDateDesc()`, `compareDateAsc()`, `compareTitle()`
+  - `compareStatusPriority()`, `compareCategory()`, `chainComparators()`
+- [x] 캐시 유틸리티 (`src/lib/cache-utils.ts`)
+  - `CacheManager<T>` 제네릭 클래스 (set/get/has/delete/clear/getOrSet/invalidateByPattern)
+  - `memoize()`, `invalidateCache()`, `createDefaultCache()`, `createLongCache()`, `createPermanentCache()`
 
 **소요 시간**: 1day  
 **완료 기준**: 모든 유틸리티 함수가 테스트되고 정상 작동
@@ -509,8 +529,8 @@ Notion API 연동을 완료하고, 애플리케이션 전체에서 사용할 데
 ### 전체 진행률
 
 ```
-Phase 1: [ ] 프로젝트 골격 (0%)
-Phase 2: [ ] 공통 모듈 (0%)
+Phase 1: [✅] 프로젝트 골격 (100%) - 5/5 Tasks 완료
+Phase 2: [✅] 공통 모듈 (100%) - 5/5 Tasks 완료
 Phase 3: [ ] 핵심 기능 (0%)
 Phase 4: [ ] 추가 기능 (0%)
 Phase 5: [ ] 최적화 및 배포 (0%)
@@ -569,5 +589,7 @@ Phase 5: [ ] 최적화 및 배포 (0%)
 ---
 
 **로드맵 작성일**: 2026-04-01  
-**최종 수정일**: 2026-04-01  
-**상태**: 활성화 (Phase 1 준비 중)
+**최종 수정일**: 2026-04-02  
+**상태**: 활성화 (Phase 2 ✅ 완료, Phase 3 대기 중)
+
+**📊 진행 상황**: Phase 3 대기 중 (10/27 Tasks 완료)

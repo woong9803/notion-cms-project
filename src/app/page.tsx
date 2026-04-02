@@ -1,4 +1,5 @@
 // 홈 대시보드 페이지 - 전체 학습 현황 요약
+import type { Metadata } from 'next'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Container } from '@/components/layout/container'
@@ -6,6 +7,59 @@ import { DashboardHero } from '@/components/dashboard/dashboard-hero'
 import { OverallProgress } from '@/components/dashboard/overall-progress'
 import { HomeClient } from '@/components/dashboard/home-client'
 import type { ProgressInfo, CategoryProgress, LearningItem } from '@/types'
+
+// ============================================================================
+// ISR 캐싱 설정 (5분마다 재검증)
+// ============================================================================
+
+/** Notion 데이터 변경 주기에 맞춘 5분 재검증 */
+export const revalidate = 300
+
+// ============================================================================
+// 페이지 메타데이터 (Task 403)
+// ============================================================================
+
+export const metadata: Metadata = {
+  title: 'DevPath - 학습 로드맵 & 데브로그',
+  description:
+    'React Native, Expo 등 기술 스택 학습 기록과 진척도를 시각화하고 공유하는 개발 학습 대시보드. Notion CMS 기반으로 실시간 업데이트됩니다.',
+  keywords: [
+    'DevPath',
+    'React Native',
+    'Expo',
+    'TypeScript',
+    '학습 로드맵',
+    '개발 대시보드',
+    '데브로그',
+    'Zustand',
+    '모바일 앱 개발',
+  ],
+  openGraph: {
+    type: 'website',
+    url: process.env.NEXT_PUBLIC_APP_URL ?? 'https://devpath.vercel.app',
+    siteName: 'DevPath',
+    title: 'DevPath - 학습 로드맵 & 데브로그',
+    description:
+      'React Native, Expo 등 기술 스택 학습 기록과 진척도를 시각화하고 공유하는 개발 학습 대시보드.',
+    locale: 'ko_KR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DevPath - 학습 로드맵 & 데브로그',
+    description:
+      'React Native, Expo 등 기술 스택 학습 기록과 진척도를 시각화하고 공유하는 개발 학습 대시보드.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
 
 // ============================================================================
 // 목 데이터 - 실제 구현 시 서비스 레이어에서 데이터 주입 필요

@@ -1,4 +1,5 @@
 // 로드맵 페이지 - 카테고리별 학습 타임라인 시각화
+import type { Metadata } from 'next'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { Container } from '@/components/layout/container'
@@ -6,6 +7,51 @@ import { RoadmapContainer } from '@/components/roadmap/roadmap-container'
 import { Badge } from '@/components/ui/badge'
 import { Map } from 'lucide-react'
 import type { LearningItem, CategoryProgress } from '@/types'
+
+// ============================================================================
+// ISR 캐싱 설정 (5분마다 재검증)
+// ============================================================================
+
+/** Notion 데이터 변경 주기에 맞춘 5분 재검증 */
+export const revalidate = 300
+
+// ============================================================================
+// 페이지 메타데이터 (Task 403)
+// ============================================================================
+
+export const metadata: Metadata = {
+  title: '학습 로드맵 | DevPath',
+  description:
+    'React Native, Expo, TypeScript, Zustand 등 기술 스택별 학습 타임라인과 진행 상황을 카테고리별로 확인하세요.',
+  keywords: [
+    '학습 로드맵',
+    'React Native',
+    'Expo',
+    'TypeScript',
+    'Zustand',
+    'Expo Router',
+    '모바일 개발',
+    '학습 타임라인',
+    '진척도',
+  ],
+  openGraph: {
+    type: 'website',
+    url:
+      (process.env.NEXT_PUBLIC_APP_URL ?? 'https://devpath.vercel.app') +
+      '/roadmap',
+    siteName: 'DevPath',
+    title: '학습 로드맵 | DevPath',
+    description:
+      'React Native, Expo, TypeScript, Zustand 등 기술 스택별 학습 타임라인과 진행 상황을 확인하세요.',
+    locale: 'ko_KR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '학습 로드맵 | DevPath',
+    description:
+      'React Native, Expo, TypeScript, Zustand 등 기술 스택별 학습 타임라인과 진행 상황을 확인하세요.',
+  },
+}
 
 // ============================================================================
 // 목 데이터 - 실제 구현 시 서비스 레이어에서 데이터 주입 필요

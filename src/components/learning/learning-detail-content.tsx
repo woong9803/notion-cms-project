@@ -271,6 +271,19 @@ const markdownComponents = {
 
     if (!isValidSrc || !srcStr) return null
 
+    // next.config.ts의 remotePatterns에 등록된 도메인은 최적화 적용
+    // 미등록 외부 도메인은 unoptimized 처리
+    const allowedHostnames = [
+      'amazonaws.com',
+      'prod-files-secure.s3.us-west-2.amazonaws.com',
+      'www.notion.so',
+      'images.unsplash.com',
+    ]
+    const isAllowedExternal = allowedHostnames.some(host =>
+      srcStr.includes(host)
+    )
+    const shouldUnoptimize = srcStr.startsWith('http') && !isAllowedExternal
+
     return (
       <span className="my-6 block">
         <Image
@@ -278,14 +291,16 @@ const markdownComponents = {
           alt={alt}
           width={800}
           height={450}
+          quality={80}
           className={cn(
             'h-auto w-full rounded-lg',
             'border-border border',
             className
           )}
-          // 이미지 로딩 최적화
+          // 지연 로딩 (뷰포트 외 이미지 로딩 지연)
           loading="lazy"
-          unoptimized={srcStr.startsWith('http')} // 외부 URL은 최적화 비적용
+          // 미등록 외부 URL은 Next.js 이미지 최적화 미적용
+          unoptimized={shouldUnoptimize}
           {...(props as Partial<React.ComponentProps<typeof Image>>)}
         />
         {/* alt 텍스트가 있는 경우 캡션으로 표시 */}

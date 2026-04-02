@@ -38,22 +38,23 @@ import { blocksToMarkdown } from '@/lib/notion-to-markdown'
 /** Notion 데이터 변경 주기에 맞춘 5분 재검증 */
 export const revalidate = 300
 
+// 빌드 시간에 API 호출을 하지 않도록 설정 (ISR 사용)
+// 첫 요청 시 동적으로 생성 후 캐싱
+export const dynamicParams = true
+
 // ============================================================================
-// 정적 경로 생성 (SSG + ISR)
+// 정적 경로 생성 (SSG + ISR) - 빌드 시간에는 API 호출 안함
 // ============================================================================
 
 /**
- * 빌드 시 모든 학습 항목의 정적 경로를 미리 생성합니다.
- * Notion API 장애 시 빈 배열을 반환해 빌드 실패를 방지합니다.
+ * 빌드 시 정적 경로를 생성하지 않습니다 (dynamicParams = true)
+ * 대신 첫 요청 시 동적으로 페이지를 생성하고 ISR로 캐싱합니다.
+ * Vercel 환경에서 API 키가 설정되면 온디맨드 재검증이 작동합니다.
  */
 export async function generateStaticParams(): Promise<{ id: string }[]> {
-  try {
-    const items = await getAllLearningItems()
-    return items.map(item => ({ id: item.id }))
-  } catch {
-    // 빌드 시 Notion API 오류가 있어도 빌드 실패 방지
-    return []
-  }
+  // 빌드 시간에는 API를 호출하지 않음
+  // dynamicParams = true이므로 이 함수는 빈 배열만 반환합니다.
+  return []
 }
 
 // ============================================================================

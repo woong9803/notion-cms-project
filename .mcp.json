@@ -17,6 +17,17 @@
     "shadcn": {
       "command": "npx",
       "args": ["shadcn@latest", "mcp"]
+    },
+    "shrimp-task-manager": {
+      "command": "node",
+      "args": [
+        "/Users/lyh3254/workspace/mcp-shrimp-task-manager/dist/index.js"
+      ],
+      "env": {
+        "DATA_DIR": "/Users/lyh3254/workspace/notion-cms-project/shrimp_data",
+        "TEMPLATES_USE": "en",
+        "ENABLE_GUI": "false"
+      }
     }
   }
 }

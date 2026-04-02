@@ -39,3 +39,10 @@ Thumbs.db
 
 # Generated files
 next-env.d.ts
+
+# Shrimp task manager 데이터 파일
+shrimp_data/
+shrimp-rules.md
+
+# README
+README.md

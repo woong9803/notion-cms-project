@@ -23,6 +23,12 @@ const envSchema = z.object({
     .min(1, 'NOTION_DATABASE_ID가 비어있습니다.')
     .describe('Notion 학습 데이터베이스 ID')
     .optional(),
+  // 관리자 인증 패스워드
+  ADMIN_PASSWORD: z
+    .string()
+    .min(1, 'ADMIN_PASSWORD가 비어있습니다.')
+    .describe('관리자 로그인 패스워드')
+    .optional(),
 })
 
 // ============================================================================
@@ -35,6 +41,7 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NOTION_API_KEY: process.env.NOTION_API_KEY,
   NOTION_DATABASE_ID: process.env.NOTION_DATABASE_ID,
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
 })
 
 export type Env = z.infer<typeof envSchema>

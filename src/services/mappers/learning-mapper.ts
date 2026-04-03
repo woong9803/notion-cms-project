@@ -1,5 +1,5 @@
 import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints'
-import type { LearningItem } from '@/types'
+import type { LearningItem, LearningItemInput } from '@/types'
 import type {
   NotionLearningPageDTO,
   LearningPagePropertiesDTO,
@@ -14,6 +14,7 @@ import {
   convertNotionStatusToApp,
   convertNotionCategoryToApp,
 } from '@/lib/validators'
+import { APP_TO_NOTION_STATUS, APP_TO_NOTION_CATEGORY } from '@/lib/constants'
 import { ValidationError } from '@/lib/errors'
 
 // ============================================================================
@@ -27,58 +28,58 @@ import { ValidationError } from '@/lib/errors'
 function extractProperties(
   raw: PageObjectResponse['properties']
 ): LearningPagePropertiesDTO {
-  const 제목 = raw['제목']
-  const 카테고리 = raw['카테고리']
-  const 상태 = raw['상태']
-  const 날짜 = raw['날짜']
-  const 요약 = raw['요약']
-  const 내용 = raw['내용']
-  const 태그 = raw['태그']
+  const 제목 = raw['Title']
+  const 카테고리 = raw['Category']
+  const 상태 = raw['Status']
+  const 날짜 = raw['Date']
+  const 요약 = raw['Summary']
+  const 내용 = raw['Content']
+  const 태그 = raw['Tags']
 
   if (!제목 || 제목.type !== 'title') {
     throw new ValidationError(
-      'Notion 페이지에 "제목" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Title" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
   if (!카테고리 || 카테고리.type !== 'select') {
     throw new ValidationError(
-      'Notion 페이지에 "카테고리" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Category" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
   if (!상태 || 상태.type !== 'status') {
     throw new ValidationError(
-      'Notion 페이지에 "상태" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Status" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
   if (!날짜 || 날짜.type !== 'date') {
     throw new ValidationError(
-      'Notion 페이지에 "날짜" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Date" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
   if (!요약 || 요약.type !== 'rich_text') {
     throw new ValidationError(
-      'Notion 페이지에 "요약" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Summary" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
   if (!내용 || 내용.type !== 'rich_text') {
     throw new ValidationError(
-      'Notion 페이지에 "내용" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Content" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
   if (!태그 || 태그.type !== 'multi_select') {
     throw new ValidationError(
-      'Notion 페이지에 "태그" 속성이 없거나 형식이 올바르지 않습니다.'
+      'Notion 페이지에 "Tags" 속성이 없거나 형식이 올바르지 않습니다.'
     )
   }
 
   return {
-    제목: 제목 as TitlePropertyDTO,
-    카테고리: 카테고리 as SelectPropertyDTO,
-    상태: 상태 as StatusPropertyDTO,
-    날짜: 날짜 as DatePropertyDTO,
-    요약: 요약 as RichTextPropertyDTO,
-    내용: 내용 as RichTextPropertyDTO,
-    태그: 태그 as MultiSelectPropertyDTO,
+    Title: 제목 as TitlePropertyDTO,
+    Category: 카테고리 as SelectPropertyDTO,
+    Status: 상태 as StatusPropertyDTO,
+    Date: 날짜 as DatePropertyDTO,
+    Summary: 요약 as RichTextPropertyDTO,
+    Content: 내용 as RichTextPropertyDTO,
+    Tags: 태그 as MultiSelectPropertyDTO,
   }
 }
 
@@ -143,27 +144,29 @@ export function mapDTOToLearningItem(dto: NotionLearningPageDTO): LearningItem {
   const { properties } = dto
 
   // 제목
-  const title = extractTitle(properties.제목)
+  const title = extractTitle(properties.Title)
 
   // 카테고리 (알 수 없는 값은 'other'로 처리)
   const category = convertNotionCategoryToApp(
-    properties.카테고리.select?.name ?? null
+    properties.Category.select?.name ?? null
   )
 
   // 상태 (기본값: 'todo')
-  const status = convertNotionStatusToApp(properties.상태.status?.name ?? null)
+  const status = convertNotionStatusToApp(
+    properties.Status.status?.name ?? null
+  )
 
   // 날짜
-  const dateData = properties.날짜.date
+  const dateData = properties.Date.date
   const startDate = dateData?.start ? new Date(dateData.start) : undefined
   const endDate = dateData?.end ? new Date(dateData.end) : undefined
 
   // 요약 및 내용
-  const summary = extractRichText(properties.요약)
-  const content = extractRichText(properties.내용)
+  const summary = extractRichText(properties.Summary)
+  const content = extractRichText(properties.Content)
 
   // 태그
-  const tags = extractMultiSelect(properties.태그)
+  const tags = extractMultiSelect(properties.Tags)
 
   // 생성/수정 시각
   const createdAt = new Date(dto.created_time)
@@ -227,4 +230,67 @@ export function mapNotionPagesToLearningItems(
   }
 
   return results
+}
+
+// ============================================================================
+// LearningItemInput → Notion properties 변환 (역방향 매퍼)
+// ============================================================================
+
+/**
+ * LearningItemInput을 Notion API properties 형식으로 변환합니다.
+ * 이 함수는 생성(create) 또는 수정(update) 시 사용됩니다.
+ */
+export function mapLearningItemToProperties(
+  input: LearningItemInput
+): Record<string, unknown> {
+  return {
+    Title: {
+      title: [
+        {
+          text: {
+            content: input.title,
+          },
+        },
+      ],
+    },
+    Category: {
+      select: {
+        name: APP_TO_NOTION_CATEGORY[input.category],
+      },
+    },
+    Status: {
+      status: {
+        name: APP_TO_NOTION_STATUS[input.status],
+      },
+    },
+    Date: {
+      date: {
+        start: input.startDate ?? null,
+        end: input.endDate ?? null,
+      },
+    },
+    Summary: {
+      rich_text: [
+        {
+          text: {
+            content: input.summary,
+          },
+        },
+      ],
+    },
+    Content: {
+      rich_text: [
+        {
+          text: {
+            content: input.content,
+          },
+        },
+      ],
+    },
+    Tags: {
+      multi_select: input.tags.map(tag => ({
+        name: tag,
+      })),
+    },
+  }
 }

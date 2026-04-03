@@ -118,6 +118,18 @@ export const NOTION_TO_APP_CATEGORY: Record<string, Category> = {
   Zustand: 'zustand',
 } as const
 
+/**
+ * 애플리케이션 카테고리 → Notion 카테고리명 매핑
+ */
+export const APP_TO_NOTION_CATEGORY: Record<Category, string> = {
+  react_native: 'React Native',
+  expo: 'Expo',
+  expo_router: 'Expo Router',
+  typescript: 'TypeScript',
+  zustand: 'Zustand',
+  other: '기타',
+} as const
+
 // ============================================================================
 // 상태별 쿼리 상수
 // ============================================================================

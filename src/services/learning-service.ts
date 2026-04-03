@@ -1,5 +1,6 @@
 import type {
   LearningItem,
+  LearningItemInput,
   Status,
   Category,
   FilterOptions,
@@ -13,16 +14,35 @@ import {
   APP_TO_NOTION_STATUS,
   NOTION_TO_APP_CATEGORY,
 } from '@/lib/constants'
-import { queryDatabaseAll, getPage } from '@/services/notion-service'
+import {
+  queryDatabaseAll,
+  getPage,
+  createPage,
+  updatePage,
+  archivePage,
+} from '@/services/notion-service'
 import {
   mapNotionPagesToLearningItems,
   mapNotionPageToLearningItem,
+  mapLearningItemToProperties,
 } from '@/services/mappers/learning-mapper'
 import { ValidationError } from '@/lib/errors'
 
 // ============================================================================
 // 환경 변수 읽기 (런타임)
 // ============================================================================
+
+/**
+ * UUID 형식(하이픈 포함)으로 데이터베이스 ID를 포맷합니다.
+ * 예: 3359b0728da680dbb910e79318466ce4 → 3359b072-8da6-80db-b910-e79318466ce4
+ */
+function formatDatabaseId(id: string): string {
+  // 이미 하이픈이 있으면 그대로 반환
+  if (id.includes('-')) return id
+
+  // 하이픈이 없으면 추가
+  return `${id.substring(0, 8)}-${id.substring(8, 12)}-${id.substring(12, 16)}-${id.substring(16, 20)}-${id.substring(20)}`
+}
 
 /**
  * Notion 데이터베이스 ID를 런타임에 가져옵니다.
@@ -35,7 +55,7 @@ function getDatabaseId(): string {
       'NOTION_DATABASE_ID 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.'
     )
   }
-  return id
+  return formatDatabaseId(id)
 }
 
 // ============================================================================
@@ -218,7 +238,7 @@ export async function getLearningItemsByStatus(
       const notionStatus = APP_TO_NOTION_STATUS[statuses[0]]
       const pages = await queryDatabaseAll(databaseId, {
         filter: {
-          property: '상태',
+          property: 'Status',
           status: { equals: notionStatus },
         },
         sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }],
@@ -263,7 +283,7 @@ export async function getLearningItemsByCategory(
       if (notionCategoryName) {
         const pages = await queryDatabaseAll(databaseId, {
           filter: {
-            property: '카테고리',
+            property: 'Category',
             select: { equals: notionCategoryName },
           },
           sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }],
@@ -436,4 +456,87 @@ export function getCacheStatus(): {
     age: Math.floor((Date.now() - entry.timestamp) / 1000),
     valid: isCacheValid(entry),
   }))
+}
+
+// ============================================================================
+// 학습 항목 생성/수정/삭제 함수
+// ============================================================================
+
+/**
+ * 새 학습 항목을 생성합니다.
+ */
+export async function createLearningItem(
+  input: LearningItemInput
+): Promise<LearningItem> {
+  try {
+    const databaseId = getDatabaseId()
+    const properties = mapLearningItemToProperties(input)
+
+    const page = await createPage(databaseId, properties)
+    const item = mapNotionPageToLearningItem(page)
+
+    // 캐시 무효화
+    invalidateCache()
+
+    return item
+  } catch (error) {
+    throw handleNotionError(error)
+  }
+}
+
+/**
+ * 기존 학습 항목을 수정합니다.
+ */
+export async function updateLearningItem(
+  id: string,
+  input: Partial<LearningItemInput>
+): Promise<LearningItem> {
+  try {
+    // 현재 항목 조회
+    const current = await getLearningItemById(id)
+
+    // 입력값과 기존값을 병합
+    const merged: LearningItemInput = {
+      title: input.title ?? current.title,
+      category: input.category ?? current.category,
+      status: input.status ?? current.status,
+      startDate:
+        input.startDate ?? current.startDate?.toISOString().split('T')[0],
+      endDate: input.endDate ?? current.endDate?.toISOString().split('T')[0],
+      summary: input.summary ?? current.summary,
+      content: input.content ?? current.content,
+      tags: input.tags ?? current.tags,
+    }
+
+    const properties = mapLearningItemToProperties(merged)
+    const page = await updatePage(id, properties)
+    const item = mapNotionPageToLearningItem(page)
+
+    // 캐시 무효화
+    invalidateCache()
+
+    return item
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error
+    }
+    throw handleNotionError(error)
+  }
+}
+
+/**
+ * 학습 항목을 삭제합니다. (아카이브)
+ */
+export async function deleteLearningItem(id: string): Promise<void> {
+  try {
+    await archivePage(id)
+
+    // 캐시 무효화
+    invalidateCache()
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error
+    }
+    throw handleNotionError(error)
+  }
 }

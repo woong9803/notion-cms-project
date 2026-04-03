@@ -85,54 +85,91 @@ export async function getDatabase(
 // ============================================================================
 // 데이터 소스(데이터베이스) 쿼리 함수
 // ============================================================================
-// 이 버전의 @notionhq/client에서는 databases.query 대신
-// dataSources.query를 사용합니다.
+// Notion API v1 REST 엔드포인트를 직접 호출합니다.
+// (SDK의 dataSources.query() API는 Integration 권한 부족으로 작동하지 않음)
 
 /**
- * Notion 데이터 소스(데이터베이스)를 단일 페이지 쿼리합니다.
+ * Notion 데이터베이스를 단일 페이지 쿼리합니다.
+ * Notion REST API /databases/{id}/query 엔드포인트를 직접 호출합니다.
  */
 export async function queryDatabase(
   databaseId: string,
   options: NotionQueryOptions = {}
 ): Promise<QueryDataSourceResponse> {
-  const client = getNotionClient()
+  const apiKey = process.env.NOTION_API_KEY
+
+  if (!apiKey) {
+    throw new NotionError('NOTION_API_KEY 환경 변수가 설정되지 않았습니다.')
+  }
 
   try {
-    const response = await client.dataSources.query({
-      data_source_id: databaseId,
-      filter: options.filter,
-      sorts: options.sorts,
-      start_cursor: options.startCursor,
-      page_size: options.pageSize,
-    })
-    return response
+    const requestBody: Record<string, unknown> = {
+      page_size: options.pageSize ?? 100,
+    }
+
+    if (options.filter) {
+      requestBody.filter = options.filter
+    }
+
+    if (options.sorts) {
+      requestBody.sorts = options.sorts
+    }
+
+    if (options.startCursor) {
+      requestBody.start_cursor = options.startCursor
+    }
+
+    const response = await fetch(
+      `https://api.notion.com/v1/databases/${databaseId}/query`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Notion-Version': '2026-03-11',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new NotionError(
+        `Notion API 오류 [HTTP ${response.status}]: ${errorData.message}`,
+        { code: errorData.code, status: response.status }
+      )
+    }
+
+    return (await response.json()) as QueryDataSourceResponse
   } catch (error) {
+    if (error instanceof NotionError) {
+      throw error
+    }
     throwNotionError(error)
   }
 }
 
 /**
- * Notion 데이터 소스(데이터베이스)의 모든 항목을 페이지네이션으로 가져옵니다.
+ * Notion 데이터베이스의 모든 항목을 페이지네이션으로 가져옵니다.
  * has_more가 true인 경우 자동으로 다음 페이지를 요청합니다.
  */
 export async function queryDatabaseAll(
   databaseId: string,
   options: Omit<NotionQueryOptions, 'startCursor'> = {}
 ): Promise<PageObjectResponse[]> {
-  const client = getNotionClient()
   const results: PageObjectResponse[] = []
   let startCursor: string | undefined = undefined
   let hasMore = true
 
   try {
     while (hasMore) {
-      const response: QueryDataSourceResponse = await client.dataSources.query({
-        data_source_id: databaseId,
-        filter: options.filter,
-        sorts: options.sorts,
-        start_cursor: startCursor,
-        page_size: options.pageSize ?? 100,
-      })
+      const response: QueryDataSourceResponse = await queryDatabase(
+        databaseId,
+        {
+          ...options,
+          startCursor,
+        }
+      )
 
       // 전체 페이지 응답만 수집 (부분 응답 및 DataSource 객체 제외)
       for (const item of response.results) {
@@ -216,6 +253,96 @@ export async function getPageBlocks(
 
     return results
   } catch (error) {
+    throwNotionError(error)
+  }
+}
+
+// ============================================================================
+// 페이지 생성/수정/삭제 함수
+// ============================================================================
+
+/**
+ * Notion 데이터베이스에 새 페이지를 생성합니다.
+ */
+export async function createPage(
+  databaseId: string,
+  properties: Record<string, unknown>
+): Promise<PageObjectResponse> {
+  const client = getNotionClient()
+
+  try {
+    const response = await client.pages.create({
+      parent: {
+        database_id: databaseId,
+      },
+      properties,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    if (!isFullPage(response)) {
+      throw new NotFoundError('생성된 페이지를 찾을 수 없습니다.')
+    }
+
+    return response
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error
+    }
+    throwNotionError(error)
+  }
+}
+
+/**
+ * Notion 페이지의 속성을 수정합니다.
+ */
+export async function updatePage(
+  pageId: string,
+  properties: Record<string, unknown>
+): Promise<PageObjectResponse> {
+  const client = getNotionClient()
+
+  try {
+    const response = await client.pages.update({
+      page_id: pageId,
+      properties,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    if (!isFullPage(response)) {
+      throw new NotFoundError('수정된 페이지를 찾을 수 없습니다.')
+    }
+
+    return response
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error
+    }
+    throwNotionError(error)
+  }
+}
+
+/**
+ * Notion 페이지를 아카이브합니다.
+ * (Notion은 실제 삭제 대신 아카이브를 사용합니다)
+ */
+export async function archivePage(pageId: string): Promise<PageObjectResponse> {
+  const client = getNotionClient()
+
+  try {
+    const response = await client.pages.update({
+      page_id: pageId,
+      archived: true,
+    })
+
+    if (!isFullPage(response)) {
+      throw new NotFoundError('아카이브된 페이지를 찾을 수 없습니다.')
+    }
+
+    return response
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error
+    }
     throwNotionError(error)
   }
 }

@@ -86,13 +86,13 @@ export function isValidLearningItemDTO(item: unknown): item is LearningItemDTO {
 
   // 필수 필드 확인
   return (
-    props['제목'] !== undefined &&
-    props['카테고리'] !== undefined &&
-    props['상태'] !== undefined &&
-    props['날짜'] !== undefined &&
-    props['요약'] !== undefined &&
-    props['내용'] !== undefined &&
-    props['태그'] !== undefined
+    props['Title'] !== undefined &&
+    props['Category'] !== undefined &&
+    props['Status'] !== undefined &&
+    props['Date'] !== undefined &&
+    props['Summary'] !== undefined &&
+    props['Content'] !== undefined &&
+    props['Tags'] !== undefined
   )
 }
 
@@ -148,16 +148,16 @@ export function convertDTOToLearningItem(dto: LearningItemDTO): LearningItem {
   const props = dto.properties
 
   // 제목 추출
-  const title = props['제목']?.title?.[0]?.plain_text || '제목 없음'
+  const title = props['Title']?.title?.[0]?.plain_text || '제목 없음'
 
   // 카테고리 추출
-  const category = convertNotionCategoryToApp(props['카테고리']?.select?.name)
+  const category = convertNotionCategoryToApp(props['Category']?.select?.name)
 
   // 상태 추출
-  const status = convertNotionStatusToApp(props['상태']?.status?.name)
+  const status = convertNotionStatusToApp(props['Status']?.status?.name)
 
   // 날짜 추출
-  const dateData = props['날짜']?.date
+  const dateData = props['Date']?.date
   let startDate: Date | undefined
   let endDate: Date | undefined
 
@@ -171,14 +171,14 @@ export function convertDTOToLearningItem(dto: LearningItemDTO): LearningItem {
 
   // 요약 추출
   const summary =
-    props['요약']?.rich_text?.map(t => t.plain_text).join('') || ''
+    props['Summary']?.rich_text?.map(t => t.plain_text).join('') || ''
 
   // 내용 추출
   const content =
-    props['내용']?.rich_text?.map(t => t.plain_text).join('') || ''
+    props['Content']?.rich_text?.map(t => t.plain_text).join('') || ''
 
   // 태그 추출
-  const tags = props['태그']?.multi_select?.map(t => t.name) || []
+  const tags = props['Tags']?.multi_select?.map(t => t.name) || []
 
   return {
     id: dto.id,

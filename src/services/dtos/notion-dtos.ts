@@ -90,13 +90,13 @@ export interface MultiSelectPropertyDTO {
  * Notion 데이터베이스 컬럼명과 1:1 대응합니다.
  */
 export interface LearningPagePropertiesDTO {
-  제목: TitlePropertyDTO
-  카테고리: SelectPropertyDTO
-  상태: StatusPropertyDTO
-  날짜: DatePropertyDTO
-  요약: RichTextPropertyDTO
-  내용: RichTextPropertyDTO
-  태그: MultiSelectPropertyDTO
+  Title: TitlePropertyDTO
+  Category: SelectPropertyDTO
+  Status: StatusPropertyDTO
+  Date: DatePropertyDTO
+  Summary: RichTextPropertyDTO
+  Content: RichTextPropertyDTO
+  Tags: MultiSelectPropertyDTO
 }
 
 /**

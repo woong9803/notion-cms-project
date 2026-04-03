@@ -36,18 +36,32 @@ export interface LearningItem {
 }
 
 /**
+ * 학습 항목 생성/수정 입력 타입
+ */
+export interface LearningItemInput {
+  title: string
+  category: Category
+  status: Status
+  startDate?: string
+  endDate?: string
+  summary: string
+  content: string
+  tags: string[]
+}
+
+/**
  * Notion API 응답 데이터를 위한 DTO (Data Transfer Object)
  */
 export interface LearningItemDTO {
   id: string
   properties: {
-    제목: { title: Array<{ plain_text: string }> }
-    카테고리: { select: { name: string } | null }
-    상태: { status: { name: string } | null }
-    날짜: { date: { start: string; end: string | null } | null }
-    요약: { rich_text: Array<{ plain_text: string }> }
-    내용: { rich_text: Array<{ plain_text: string }> }
-    태그: { multi_select: Array<{ name: string }> }
+    Title: { title: Array<{ plain_text: string }> }
+    Category: { select: { name: string } | null }
+    Status: { status: { name: string } | null }
+    Date: { date: { start: string; end: string | null } | null }
+    Summary: { rich_text: Array<{ plain_text: string }> }
+    Content: { rich_text: Array<{ plain_text: string }> }
+    Tags: { multi_select: Array<{ name: string }> }
   }
 }
 

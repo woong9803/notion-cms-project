@@ -16,11 +16,13 @@ const envSchema = z.object({
   NOTION_API_KEY: z
     .string()
     .min(1, 'NOTION_API_KEY가 비어있습니다.')
-    .describe('Notion API 인증 키'),
+    .describe('Notion API 인증 키')
+    .optional(),
   NOTION_DATABASE_ID: z
     .string()
     .min(1, 'NOTION_DATABASE_ID가 비어있습니다.')
-    .describe('Notion 학습 데이터베이스 ID'),
+    .describe('Notion 학습 데이터베이스 ID')
+    .optional(),
   // 관리자 인증 패스워드
   ADMIN_PASSWORD: z
     .string()

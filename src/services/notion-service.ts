@@ -11,7 +11,6 @@ import type {
 } from '@notionhq/client'
 import type { BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints/blocks'
 import { getNotionClient } from '@/lib/notion-client'
-import { env } from '@/lib/env'
 import { NotionError, NotFoundError } from '@/lib/errors'
 
 // ============================================================================
@@ -97,7 +96,7 @@ export async function queryDatabase(
   databaseId: string,
   options: NotionQueryOptions = {}
 ): Promise<QueryDataSourceResponse> {
-  const apiKey = env.NOTION_API_KEY
+  const apiKey = process.env.NOTION_API_KEY
 
   if (!apiKey) {
     throw new NotionError('NOTION_API_KEY 환경 변수가 설정되지 않았습니다.')

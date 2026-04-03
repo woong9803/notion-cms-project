@@ -1,4 +1,5 @@
 import { Client } from '@notionhq/client'
+import { env } from './env'
 import { NotionError } from './errors'
 
 // ============================================================================
@@ -19,7 +20,7 @@ export function getNotionClient(): Client {
   }
 
   // 환경 변수에서 API 키 읽기
-  const apiKey = process.env.NOTION_API_KEY
+  const apiKey = env.NOTION_API_KEY
 
   if (!apiKey) {
     throw new NotionError(

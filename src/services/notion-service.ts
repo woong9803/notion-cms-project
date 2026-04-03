@@ -11,6 +11,7 @@ import type {
 } from '@notionhq/client'
 import type { BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints/blocks'
 import { getNotionClient } from '@/lib/notion-client'
+import { env } from '@/lib/env'
 import { NotionError, NotFoundError } from '@/lib/errors'
 
 // ============================================================================
@@ -96,10 +97,18 @@ export async function queryDatabase(
   databaseId: string,
   options: NotionQueryOptions = {}
 ): Promise<QueryDataSourceResponse> {
-  const apiKey = process.env.NOTION_API_KEY
+  const apiKey = env.NOTION_API_KEY
 
   if (!apiKey) {
     throw new NotionError('NOTION_API_KEY 환경 변수가 설정되지 않았습니다.')
+  }
+
+  // 데이터베이스 ID 검증
+  const cleanDatabaseId = databaseId?.trim()
+  if (!cleanDatabaseId) {
+    throw new NotionError(
+      `데이터베이스 ID가 비어있습니다. .env.local에서 NOTION_DATABASE_ID를 확인하세요.`
+    )
   }
 
   try {
@@ -119,18 +128,18 @@ export async function queryDatabase(
       requestBody.start_cursor = options.startCursor
     }
 
-    const response = await fetch(
-      `https://api.notion.com/v1/databases/${databaseId}/query`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Notion-Version': '2026-03-11',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      }
-    )
+    // URL은 URL 객체 사용으로 안전하게 구성
+    const url = `https://api.notion.com/v1/databases/${encodeURIComponent(cleanDatabaseId)}/query`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Notion-Version': '2026-03-11',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    })
 
     if (!response.ok) {
       const errorData = await response.json()

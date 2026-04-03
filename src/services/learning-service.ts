@@ -6,6 +6,7 @@ import type {
   FilterOptions,
   SortOptions,
 } from '@/types'
+import { env } from '@/lib/env'
 import { NotFoundError } from '@/lib/errors'
 import { handleNotionError } from '@/lib/errors'
 import {
@@ -49,7 +50,7 @@ function formatDatabaseId(id: string): string {
  * 환경 변수가 없으면 에러를 throw합니다.
  */
 function getDatabaseId(): string {
-  const id = process.env.NOTION_DATABASE_ID
+  const id = env.NOTION_DATABASE_ID
   if (!id) {
     throw new ValidationError(
       'NOTION_DATABASE_ID 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.'

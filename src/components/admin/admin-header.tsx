@@ -21,7 +21,10 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
+    <header
+      className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur"
+      suppressHydrationWarning
+    >
       <Container>
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
